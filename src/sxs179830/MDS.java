@@ -66,11 +66,12 @@ public class MDS {
         }
     }
 
-    // Add fields of MDS here
     private Map<Long, Product> primaryIndexById;
     private Map<Long, Set<Long>> secondaryIndexByDescription;
 
-    // Constructors
+    /**
+     * Initializing Two Map used for indexing
+     */
     public MDS() {
         primaryIndexById = new TreeMap<>();
         secondaryIndexByDescription = new HashMap<>();
@@ -150,7 +151,6 @@ public class MDS {
         return new Money();
     }
 
-
     /**
      * Delete(id): delete item from storage.  Returns the sum of the
      * long ints that are in the description of the item deleted,
@@ -195,7 +195,6 @@ public class MDS {
         return new Money();
     }
 
-
     /**
      * FindMaxPrice(n): given a long int, find items whose description
      * contains that number, and return highest price of those items.
@@ -208,10 +207,10 @@ public class MDS {
         Money maxPrice = null;
         if(idList != null && idList.size() > 0) {
             for(long l : idList) {
-                Money newMoney = primaryIndexById.get(l).getPrice();
-                if(maxPrice == null) maxPrice = newMoney;
-                else if(maxPrice.compareTo(newMoney) <= 0 ) {
-                    maxPrice = newMoney;
+                Money productPrice = primaryIndexById.get(l).getPrice();
+                if(maxPrice == null) maxPrice = productPrice;
+                else if(maxPrice.compareTo(productPrice) <= 0 ) {
+                    maxPrice = productPrice;
                 }
             }
             return maxPrice;
@@ -219,12 +218,27 @@ public class MDS {
         return new Money();
     }
 
-    /*
-       f. FindPriceRange(n,low,high): given a long int n, find the number
-       of items whose description contains n, and in addition,
-       their prices fall within the given range, [low, high].
-    */
+    /**
+     * FindPriceRange(n,low,high): given a long int n, find the number
+     * of items whose description contains n, and in addition,
+     * their prices fall within the given range, [low, high].
+     * @param n value to search in description of product
+     * @param low lower bound of price
+     * @param high higher bound of price
+     * @return number of product with price withing given range and containing given value in description
+     */
     public int findPriceRange(long n, Money low, Money high) {
+        Set<Long> idList = secondaryIndexByDescription.get(n);
+        if(idList != null && idList.size() > 0) {
+            int count = 0;
+            for(long l : idList) {
+                Money productPrice = primaryIndexById.get(l).getPrice();
+                if(low.compareTo(productPrice) <= 0 && high.compareTo(productPrice) >= 0) {
+                    count++;
+                }
+            }
+            return count;
+        }
         return 0;
     }
 
@@ -237,14 +251,29 @@ public class MDS {
         return new Money();
     }
 
-    /*
-      h. RemoveNames(id, list): Remove elements of list from the description of id.
-      It is possible that some of the items in the list are not in the
-      id's description.  Return the sum of the numbers that are actually
-      deleted from the description of id.  Return 0 if there is no such id.
-    */
+    /**
+     * RemoveNames(id, list): Remove elements of list from the description of id.
+     * It is possible that some of the items in the list are not in the
+     * id's description.  Return the sum of the numbers that are actually
+     * deleted from the description of id.  Return 0 if there is no such id.
+     * @param id product id
+     * @param list list of long int to remove
+     * @return count
+     */
     public long removeNames(long id, java.util.List<Long> list) {
-        return 0;
+        Product prod = primaryIndexById.get(id);
+        if(prod == null) return 0;
+        long sum = 0;
+        List<Long> desc = prod.getDescription();
+        List<Long> valRemoved = new ArrayList<>();
+        for(long l : list) {
+            if(desc.contains(l)) {
+                valRemoved.add(l);
+                sum += l;
+            }
+        }
+        removeSecondaryIndex(id, valRemoved);
+        return sum;
     }
 
     // Do not modify the Money class in a way that breaks LP3Driver.java
