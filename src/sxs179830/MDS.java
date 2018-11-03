@@ -242,13 +242,45 @@ public class MDS {
         return 0;
     }
 
+    /**
+     * FindProductInRange(low,high):
+     * @param low lower bound of id
+     * @param high higher bound of id
+     * @return list of product with id withing given range
+     */
+    public List<Long> FindProductIdsInRange(long low, long high){
+        Set<Long> prodIds = primaryIndexById.keyset();
+        List<Long> productIds = new ArrayList<>();
+        if(!prodIds.isEmpty()){
+            for(Long id : prodIds){
+                if(id >= low && id <= high){
+                    productIds.add(id)
+                }
+            }
+        }
+        return productIds;
+    }
+
     /*
        g. PriceHike(l,h,r): increase the price of every product, whose id is
        in the range [l,h] by r%.  Discard any fractional pennies in the new
        prices of items.  Returns the sum of the net increases of the prices.
     */
     public Money priceHike(long l, long h, double rate) {
-        return new Money();
+        double rateFraction =  100/rate;
+        Long sumHike = 0;
+        List<Long> prodIds = FindProductIdsInRange(l, h);
+        for(Long id : prodIds){
+            Product prod = primaryIndexById.get(id);
+            Long actualPrice = prod.price.inCents();
+            Long hike =  (Long)(actualPrice/100)* rate;
+            long d = hike/100;
+            int c = hike%100;
+            Money updated =  new Money(d, c)
+            prod.setPrice(updated);
+            sumHike+= hike;
+        }
+        return new Money(sumHike/100, sumHike%100);
     }
 
     /**
@@ -290,7 +322,7 @@ public class MDS {
         }
         public long dollars() { return d; }
         public int cents() { return c; }
-
+        public long inCents(){return (d*100)+c ; }
         public int compareTo(Money other) {
             int cmp = Long.compare(this.dollars(), other.dollars());
             if(cmp == 0) {
@@ -303,6 +335,7 @@ public class MDS {
     }
 
     public static void main(String[] args) {
+
 
     }
 }
