@@ -64,6 +64,6 @@
 ## **Instructions to compile and run the project from command line**:
 - Naviagate to "sxs179830" and open command prompt at this location
 - Compile the source file 
-   - "javac -cp . sxs179830\MutliDimensionSearch.java"
+   - "javac -cp . sxs179830\MDS.java"
 - Run the program using following command
-   - "java sxs179830.MutliDimensionSearch"
+   - "java sxs179830.MDS"

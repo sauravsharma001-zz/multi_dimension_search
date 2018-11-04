@@ -19,10 +19,10 @@ public class MDS {
     public class Product {
 
         private long id;
-        private List<Long> description;
+        private Set<Long> description;
         private Money price;
 
-        Product(long id, Money price, List<Long> list) {
+        Product(long id, Money price, Set<Long> list) {
             this.id = id;
             this.price = price;
             this.description = list;
@@ -53,16 +53,16 @@ public class MDS {
         /**
          * @return Description i.e. list of long of the product
          */
-        public List<Long> getDescription() {
+        public Set<Long> getDescription() {
             return this.description;
         }
 
         /**
          * Update the description of the product
-         * @param list list of long to set for the product
+         * @param description list of long to set for the product
          */
-        public void setDescription(List<Long> list) {
-            this.description = list;
+        public void setDescription(Set<Long> description) {
+            this.description = description;
         }
     }
 
@@ -94,16 +94,16 @@ public class MDS {
         Product prod = primaryIndexById.get(id);
         if(prod != null) {
             if(list.size() != 0) {
-                List<Long> desc = prod.getDescription();
+                Set<Long> desc = prod.getDescription();
                 removeSecondaryIndex(id, desc);
-                prod.setDescription(list);
-                addSecondaryIndex(id, list);
+                prod.setDescription(new HashSet<>(list));
+                addSecondaryIndex(id, new HashSet<>(list));
             }
             prod.setPrice(price);
         } else {
-            prod = new Product(id, price, list);
+            prod = new Product(id, price, new HashSet<>(list));
             primaryIndexById.put(id, prod);
-            addSecondaryIndex(id, list);
+            addSecondaryIndex(id, new HashSet<>(list));
             flag = 1;
         }
         return flag;
@@ -114,14 +114,16 @@ public class MDS {
      * @param id id of the Product
      * @param list description of product as list of long
      */
-    private void addSecondaryIndex(long id, List<Long> list) {
+    private void addSecondaryIndex(long id, Set<Long> list) {
         for(long d : list) {
             Set<Long> idList = secondaryIndexByDescription.get(d);
             if(idList == null) {
                 idList = new TreeSet<>();
                 idList.add(id);
+                secondaryIndexByDescription.put(d, idList);
             } else {
                 idList.add(id);
+                secondaryIndexByDescription.put(d, idList);
             }
         }
     }
@@ -129,13 +131,14 @@ public class MDS {
     /**
      * Remove the secondary index for a Product with given description
      * @param id id of the Product
-     * @param list description of product as list of long
+     * @param desc description of product as list of long
      */
-    private void removeSecondaryIndex(long id, List<Long> list) {
-        for(long d : list) {
+    private void removeSecondaryIndex(long id, Set<Long> desc) {
+        for(long d : desc) {
             Set<Long> idList = secondaryIndexByDescription.get(d);
             if(idList != null && idList.size() > 0) {
                 idList.remove(id);
+                secondaryIndexByDescription.put(d, idList);
             }
         }
     }
@@ -164,6 +167,9 @@ public class MDS {
             primaryIndexById.remove(id);
             long count = 0;
             for(long l : productToDelete.getDescription()) {
+                if(id == 17581620) {
+                    System.out.print(l + "  " + count);
+                }
                 count += l;
             }
             removeSecondaryIndex(id, productToDelete.getDescription());
@@ -261,21 +267,21 @@ public class MDS {
         return productIds;
     }
 
-    /*
-       g. PriceHike(l,h,r): increase the price of every product, whose id is
-       in the range [l,h] by r%.  Discard any fractional pennies in the new
-       prices of items.  Returns the sum of the net increases of the prices.
+    /**
+    *  g. PriceHike(l,h,r): increase the price of every product, whose id is
+    *  in the range [l,h] by r%.  Discard any fractional pennies in the new
+    *  prices of items.  Returns the sum of the net increases of the prices.
     */
     public Money priceHike(long l, long h, double rate) {
-        double rateFraction =  100/rate;
         Long sumHike = 0L;
         List<Long> prodIds = FindProductIdsInRange(l, h);
         for(Long id : prodIds){
             Product prod = primaryIndexById.get(id);
             Long actualPrice = prod.price.inCents();
-            Long hike = (long)((actualPrice/100)* rate);
-            long d = hike/100;
-            int c = (int)(hike%100);
+            Long hike = (long)((actualPrice * rate) / 100);
+            Long updatePrice = hike + actualPrice;
+            long d = updatePrice/100;
+            int c = (int)(updatePrice%100);
             Money updated =  new Money(d, c);
             prod.setPrice(updated);
             sumHike+= hike;
@@ -292,13 +298,14 @@ public class MDS {
      * @param list list of long int to remove
      * @return count
      */
-    public long removeNames(long id, java.util.List<Long> list) {
+    public long removeNames(long id, List<Long> list) {
         Product prod = primaryIndexById.get(id);
         if(prod == null) return 0;
         long sum = 0;
-        List<Long> desc = prod.getDescription();
-        List<Long> valRemoved = new ArrayList<>();
-        for(long l : list) {
+        Set<Long> desc = prod.getDescription();
+        Set<Long> valRemoved = new HashSet<>();
+        Set<Long> set = new HashSet<>(list);
+        for(long l : set) {
             if(desc.contains(l)) {
                 valRemoved.add(l);
                 sum += l;
@@ -332,10 +339,5 @@ public class MDS {
             }
         }
         public String toString() { return d + "." + c; }
-    }
-
-    public static void main(String[] args) {
-
-
     }
 }
