@@ -249,12 +249,12 @@ public class MDS {
      * @return list of product with id withing given range
      */
     public List<Long> FindProductIdsInRange(long low, long high){
-        Set<Long> prodIds = primaryIndexById.keyset();
+        Set<Long> prodIds = primaryIndexById.keySet();
         List<Long> productIds = new ArrayList<>();
         if(!prodIds.isEmpty()){
             for(Long id : prodIds){
                 if(id >= low && id <= high){
-                    productIds.add(id)
+                    productIds.add(id);
                 }
             }
         }
@@ -268,19 +268,19 @@ public class MDS {
     */
     public Money priceHike(long l, long h, double rate) {
         double rateFraction =  100/rate;
-        Long sumHike = 0;
+        Long sumHike = 0L;
         List<Long> prodIds = FindProductIdsInRange(l, h);
         for(Long id : prodIds){
             Product prod = primaryIndexById.get(id);
             Long actualPrice = prod.price.inCents();
-            Long hike =  (Long)(actualPrice/100)* rate;
+            Long hike = (long)((actualPrice/100)* rate);
             long d = hike/100;
-            int c = hike%100;
-            Money updated =  new Money(d, c)
+            int c = (int)(hike%100);
+            Money updated =  new Money(d, c);
             prod.setPrice(updated);
             sumHike+= hike;
         }
-        return new Money(sumHike/100, sumHike%100);
+        return new Money(sumHike/100, (int)(sumHike%100));
     }
 
     /**
